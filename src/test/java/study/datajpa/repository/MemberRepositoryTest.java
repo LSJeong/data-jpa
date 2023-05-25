@@ -4,10 +4,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,8 +55,8 @@ class MemberRepositoryTest {
         //단건 조회 검증
         Member findMember1 = memberRepository.findById(member1.getId()).get();
         Member findMember2 = memberRepository.findById(member2.getId()).get();
-        Assertions.assertThat(findMember1).isEqualTo(member1);
-        Assertions.assertThat(findMember2).isEqualTo(member2);
+        assertThat(findMember1).isEqualTo(member1);
+        assertThat(findMember2).isEqualTo(member2);
 
         //리스트 조회 검증
         List<Member> all = memberRepository.findAll();
@@ -323,6 +320,39 @@ class MemberRepositoryTest {
         Specification<Member> spec = MemberSpec.username("m1").and(MemberSpec.teamName("teamA"));
         List<Member> result = memberRepository.findAll(spec);
 
-        Assertions.assertThat(result.size()).isEqualTo(1);
+        assertThat(result.size()).isEqualTo(1);
+    }
+
+    @Test
+    public void queryByExample(){
+        //given
+        Team teamA = new Team("teamA");
+        em.persist(teamA);
+
+        Member m1 = new Member("m1", 0, teamA);
+        Member m2 = new Member("m2", 0, teamA);
+        em.persist(m1);
+        em.persist(m2);
+
+        em.flush();
+        em.clear();
+
+        //when
+        //Probe : 필드에 데이터가 있는 실제 도메인 객체
+        Member member = new Member("m1");
+        Team team = new Team("teamA");  //내부조인으로 teamA 가능
+        member.setTeam(team);
+
+        //ExampleMatcher: 특정 필드를 일치시키는 상세한 정보 제공, 재사용 가능
+        //ExampleMatcher 생성, age 프로퍼티는 무시
+        ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("age");
+
+        //Example: Probe와 ExampleMatcher로 구성, 쿼리를 생성하는데 사용
+        Example<Member> example = Example.of(member, matcher);
+
+        List<Member> result = memberRepository.findAll(example);
+
+        //then
+        assertThat(result.get(0).getUsername()).isEqualTo("m1");
     }
 }
