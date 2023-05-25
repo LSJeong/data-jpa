@@ -14,7 +14,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public interface MemberRepository extends JpaRepository<Member, Long> { //** 여기 선언한 Member 도메인 클래스
+                                                                        //사용자 정의 인터페이스 상속
+public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryCustom { //** 여기 선언한 Member 도메인 클래스
     List<Member> findByUsernameAndAgeGreaterThan(String username, int age);
     List<Member> findTop3HelloBy();
 
