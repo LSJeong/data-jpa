@@ -270,4 +270,32 @@ class MemberRepositoryTest {
             //@EntityGraph findAll() -> 지연로딩 x
         }
     }
+
+    @Test
+    public void queryHint(){
+        //given
+        Member member1 =new Member("member1", 10);
+        memberRepository.save(member1);
+        em.flush();
+        em.clear();
+
+        //when
+        //Member findMember = memberRepository.findById(member1.getId()).get(0);
+        Member findMember = memberRepository.findReadOnlyByUsername("member1");  //변경감지X
+        findMember.setUsername("member2");
+
+        em.flush(); //Update Query 실행X
+    }
+
+    @Test
+    public void lock(){
+        //given
+        Member member1 =new Member("member1", 10);
+        memberRepository.save(member1);
+        em.flush();
+        em.clear();
+
+        //when
+        List<Member> result = memberRepository.findLockByUsername("member1");
+    }
 }
